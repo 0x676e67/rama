@@ -437,6 +437,14 @@ required-features = ["full"]
 harness = false
 
 [[example]]
+name = "acme_http_challenge"
+required-features = ["http-full", "rustls"]
+
+[[example]]
+name = "acme_tls_challenge_using_rustls"
+required-features = ["http-full", "rustls"]
+
+[[example]]
 name = "http_conn_state"
 required-features = ["http-full"]
 
