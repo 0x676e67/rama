@@ -10,7 +10,6 @@ use aws_lc_rs::{
 use base64::prelude::{BASE64_URL_SAFE_NO_PAD, Engine};
 use rama_core::error::{BoxError, ErrorContext, OpaqueError};
 use serde::Serialize;
-use std::error::Error;
 
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -38,15 +37,16 @@ pub struct NewOrderPayload {
     pub not_after: Option<String>,
 }
 
-// 8.1
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
-/// [`KeyAuthorization`] concatenates the token for a challenge with key fingerprint
+/// [`KeyAuthorization`] concatenates the token for a challenge with key fingerprint, defined in [rfc8555 section 8.1]
+///
+/// [rfc8555 section 8.1]: https://datatracker.ietf.org/doc/html/rfc8555/#section-8.1
 pub struct KeyAuthorization(String);
 
 impl KeyAuthorization {
     /// Create [`KeyAuthorization`] for the given challenge and key
-    pub fn new(challenge: &Challenge, key: &Key) -> Self {
+    pub(crate) fn new(challenge: &Challenge, key: &Key) -> Self {
         Self(format!("{}.{}", challenge.token, &key.thumb))
     }
 
@@ -242,6 +242,7 @@ impl Key {
         Self::new(pkcs8.as_ref(), rng).map(|key| (key, pkcs8))
     }
 
+    #[allow(dead_code)]
     /// Generate a new [`Key`] from the given pkcs8 der
     ///
     /// WARNING: right now we only support an ECDSA key pair
@@ -330,16 +331,15 @@ impl Jws {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use serde::de::DeserializeOwned;
 
-    use super::*;
-
-    fn decode_base64_url<T>(data: &str) -> Result<T, Box<dyn Error>>
+    fn decode_base64_url<T>(data: &str) -> T
     where
         T: DeserializeOwned,
     {
-        let sl = BASE64_URL_SAFE_NO_PAD.decode(data)?;
-        Ok(serde_json::from_slice(sl.as_slice())?)
+        let sl = BASE64_URL_SAFE_NO_PAD.decode(data).unwrap();
+        serde_json::from_slice(sl.as_slice()).unwrap()
     }
 
     #[test]
@@ -358,7 +358,7 @@ mod tests {
         let protected_header = key.protected_header(Some(nonce), url);
         let jose_json = Jws::new(Some(&payload), &protected_header, &key).unwrap();
 
-        let decoded_payload = decode_base64_url::<String>(jose_json.payload.as_str()).unwrap();
+        let decoded_payload = decode_base64_url::<String>(jose_json.payload.as_str());
         assert_eq!(decoded_payload, payload);
     }
 }

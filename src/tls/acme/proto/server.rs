@@ -1,9 +1,8 @@
-use base64::Engine;
 use serde::{Deserialize, Serialize};
 
 use super::common::Identifier;
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 /// Directy contain all endpoints needed by an acme client, defined in [rfc8555 section 7.1.1]
 ///
@@ -18,7 +17,7 @@ pub struct Directory {
     pub meta: Option<DirectoryMeta>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 /// Extra metadata that acme server can return
 pub struct DirectoryMeta {
@@ -49,7 +48,7 @@ pub struct Account {
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 /// Current account status
-enum AccountStatus {
+pub enum AccountStatus {
     /// Valid account
     Valid,
     /// Client side initiated deactivation
@@ -69,7 +68,7 @@ enum AccountStatus {
 /// [rfc8555 section 7.1.2.1]: https://datatracker.ietf.org/doc/html/rfc8555/#section-7.1.2.1
 pub struct OrdersList {
     // List of urls, each identifying an order belonging to the account
-    orders: Vec<String>,
+    pub orders: Vec<String>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
